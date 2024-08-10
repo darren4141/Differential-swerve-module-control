@@ -6,7 +6,7 @@ class Motor
   int encPinA;
   int encPinB;
   
-  int encoderCount = 0;
+  int encoderCount;
   int kP;
   int kI;
   int kD;
@@ -23,42 +23,31 @@ class Motor
     this-> enablePin = enablePin;
     this-> encPinA = encPinA;
     this-> encPinB = encPinB;
+    encoderCount = 0;
   }
 
-  static void tickEncoder(int A, int B, int count){
-    if(digitalRead(A) > digitalRead(B)){
-      count++;
-    }else{
-      count--;
-    }
-  }
 
   void initialize(){
     pinMode(fwdPin, OUTPUT);
     pinMode(bwdPin, OUTPUT);
     pinMode(encPinA, INPUT);
     pinMode(encPinB, INPUT);
-    attachInterrupt(digitalPinToInterrupt(encPinA), tickEncoder(encPinA, encPinB, encoderCount), RISING);  
   }
 
-//  void Update(){
-//    
-//  }
-//
   void setEncoderCount(int count){
     encoderCount = count;
   }
-//
+
   int getEncoderCount(){
     return encoderCount;
   }
-//
-//  void setPIDConstants(int kP, int kI, int kD){
-//    this-> kP = kP;
-//    this-> kI = kI;
-//    this-> kD = kD;    
-//  }
-//
+
+  void setPIDConstants(int kP, int kI, int kD){
+    this-> kP = kP;
+    this-> kI = kI;
+    this-> kD = kD;    
+  }
+
 //  float calculatePID(int targetEncoderCount){
 //    long currentTime = micros();
 //    float dT = ((float)(currentTime - previousTime)) / 1.0e6;
@@ -83,7 +72,7 @@ class Motor
 //    return pwr;
 //    Serial.print(pwr);
 //  }
-//
+
 //  void setPosition(targetEncoderCount){
 //    float pwr = calculatePID(targetEncoderCount);
 //    if(pwr > 0){
@@ -101,19 +90,29 @@ class Motor
 
 
 //Motor motorA {Motor(16, 17, 15, 18, 19)};
-Motor motorA (16, 17, 15, 18, 19);
-//motorA.setPIDConstants(1, 0.4, 0.01);
+Motor motorA(16, 17, 15, 18, 19);
+int encoderCount = 0;
+
+static void tickEncoder(){
+    if(digitalRead(18) > digitalRead(19)){
+      encoderCount++;
+    }else{
+      encoderCount--;
+    }
+}
 
 void setup() {
   motorA.initialize();
+  motorA.setPIDConstants(1, 0.4, 0.01);
+  attachInterrupt(digitalPinToInterrupt(18), tickEncoder, RISING);  
   Serial.begin(9600);
 }
 
 void loop() {
-//  motorA.setPosition(1000);
+  motorA.setPIDConstants(1, 0.7, micros());
   
-//  Serial.print(", ");  
-//  Serial.println(motorA.getEncoderCount());
+  Serial.print(", ");  
+  Serial.println(motorA.getEncoderCount());
 }
 
 
