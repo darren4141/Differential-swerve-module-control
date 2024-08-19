@@ -27,6 +27,13 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(encA1), tickEncoder1, RISING);
 
+  pinMode(fwdPin2, OUTPUT);
+  pinMode(bwdPin2, OUTPUT);
+
+  pinMode(encA2, INPUT);
+  pinMode(encB2, INPUT);
+
+  attachInterrupt(digitalPinToInterrupt(encA2), tickEncoder2, RISING);
   
   Serial.begin(9600);
 
@@ -37,21 +44,28 @@ void loop() {
   digitalWrite(fwdPin1, HIGH);
   digitalWrite(bwdPin1, LOW);
 
-  float pwr = calculatePID(1000, 1, 0.4, 0.01);
+  digitalWrite(fwdPin2, LOW);
+  digitalWrite(bwdPin2, HIGH);
 
-  if(pwr > 0){
-    analogWrite(enablePin1, abs(pwr));
-    digitalWrite(fwdPin1, HIGH);
-    digitalWrite(bwdPin1, LOW);
-  }else{
-    analogWrite(enablePin1, abs(pwr));
-    digitalWrite(fwdPin1, LOW);
-    digitalWrite(bwdPin1, HIGH);
-  }
+  analogWrite(enablePin1, 255);
+  analogWrite(enablePin2, 255);
+
+
+//  float pwr = calculatePID(1000, 1, 0.4, 0.01);
+//
+//  if(pwr > 0){
+//    analogWrite(enablePin1, abs(pwr));
+//    digitalWrite(fwdPin1, HIGH);
+//    digitalWrite(bwdPin1, LOW);
+//  }else{
+//    analogWrite(enablePin1, abs(pwr));
+//    digitalWrite(fwdPin1, LOW);
+//    digitalWrite(bwdPin1, HIGH);
+//  }
   
   Serial.print(encoderCount1);
-  Serial.print(", ");
-  Serial.println(pwr);
+//  Serial.print(", ");
+//  Serial.println(pwr);
 }
 
 void tickEncoder1(){
@@ -62,26 +76,34 @@ void tickEncoder1(){
   }
 }
 
-float calculatePID(int target, float kP, float kI, float kD){
-  long currentTime = micros();
-  float dT = ((float)(currentTime - previousTime)) / 1.0e6;
-
-  int eP = target - encoderCount;
-  eI = eI + (eP * dT);
-  float eD = (eP - ePPrevious)/dT;
-
-  previousTime = currentTime;
-  ePPrevious = eP;
-
-  float pwr = (kP * eP) + (kI * eI) + (kD * eD);
-
-  if(abs(pwr) > 255){
-    if(pwr > 0){
-      pwr = 255;
-    }else{
-      pwr = -255;
-    }
+void tickEncoder2(){
+  if(digitalRead(encA2) > digitalRead(encB2)){
+    encoderCount2++;
+  }else{
+    encoderCount2--;
   }
-
-  return pwr;
 }
+
+//float calculatePID(int target, float kP, float kI, float kD){
+//  long currentTime = micros();
+//  float dT = ((float)(currentTime - previousTime)) / 1.0e6;
+//
+//  int eP = target - encoderCount;
+//  eI = eI + (eP * dT);
+//  float eD = (eP - ePPrevious)/dT;
+//
+//  previousTime = currentTime;
+//  ePPrevious = eP;
+//
+//  float pwr = (kP * eP) + (kI * eI) + (kD * eD);
+//
+//  if(abs(pwr) > 255){
+//    if(pwr > 0){
+//      pwr = 255;
+//    }else{
+//      pwr = -255;
+//    }
+//  }
+//
+//  return pwr;
+//}
