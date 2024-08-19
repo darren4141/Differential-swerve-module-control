@@ -1,10 +1,17 @@
-const int fwdPin = 16;
-const int bwdPin = 17;
-const int enablePin = 15;
-const int encA = 18;
-const int encB = 19;
+const int fwdPin1 = 2;
+const int bwdPin1 = 4;
+const int enablePin1 = 15;
+const int encA1 = 16;
+const int encB1 = 17;
 
-int encoderCount = 0;
+const int fwdPin2 = 18;
+const int bwdPin2 = 19;
+const int enablePin2 = 5;
+const int encA2 = 22;
+const int encB2 = 23;
+
+int encoderCount1 = 0;
+int encoderCount2 = 0;
 
 float eI = 0;
 float ePPrevious = 0;
@@ -12,13 +19,14 @@ float previousTime = 0;
 
 void setup() {
   // put your setup code here, to run once:
-  pinMode(fwdPin, OUTPUT);
-  pinMode(bwdPin, OUTPUT);
+  pinMode(fwdPin1, OUTPUT);
+  pinMode(bwdPin1, OUTPUT);
 
-  pinMode(encA, INPUT);
-  pinMode(encB, INPUT);
+  pinMode(encA1, INPUT);
+  pinMode(encB1, INPUT);
 
-  attachInterrupt(digitalPinToInterrupt(encA), tickEncoder, RISING);
+  attachInterrupt(digitalPinToInterrupt(encA1), tickEncoder1, RISING);
+
   
   Serial.begin(9600);
 
@@ -26,38 +34,35 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  digitalWrite(fwdPin, HIGH);
-  digitalWrite(bwdPin, LOW);
+  digitalWrite(fwdPin1, HIGH);
+  digitalWrite(bwdPin1, LOW);
 
-  float pwr = pidControl(1000, 1, 0.4, 0.01);
+  float pwr = calculatePID(1000, 1, 0.4, 0.01);
 
   if(pwr > 0){
-    analogWrite(enablePin, abs(pwr));
-    digitalWrite(fwdPin, HIGH);
-    digitalWrite(bwdPin, LOW);
+    analogWrite(enablePin1, abs(pwr));
+    digitalWrite(fwdPin1, HIGH);
+    digitalWrite(bwdPin1, LOW);
   }else{
-    analogWrite(enablePin, abs(pwr));
-    digitalWrite(fwdPin, LOW);
-    digitalWrite(bwdPin, HIGH);
+    analogWrite(enablePin1, abs(pwr));
+    digitalWrite(fwdPin1, LOW);
+    digitalWrite(bwdPin1, HIGH);
   }
   
-
-  
-  
-  Serial.print(encoderCount);
+  Serial.print(encoderCount1);
   Serial.print(", ");
   Serial.println(pwr);
 }
 
-void tickEncoder(){
-  if(digitalRead(encA) > digitalRead(encB)){
-    encoderCount++;
+void tickEncoder1(){
+  if(digitalRead(encA1) > digitalRead(encB1)){
+    encoderCount1++;
   }else{
-    encoderCount--;
+    encoderCount1--;
   }
 }
 
-float pidControl(int target, float kP, float kI, float kD){
+float calculatePID(int target, float kP, float kI, float kD){
   long currentTime = micros();
   float dT = ((float)(currentTime - previousTime)) / 1.0e6;
 
@@ -70,9 +75,13 @@ float pidControl(int target, float kP, float kI, float kD){
 
   float pwr = (kP * eP) + (kI * eI) + (kD * eD);
 
-  if(pwr > 255){
-    pwr = 255;
+  if(abs(pwr) > 255){
+    if(pwr > 0){
+      pwr = 255;
+    }else{
+      pwr = -255;
+    }
   }
 
-  return (kP * eP) + (kI * eI) + (kD * eD);
+  return pwr;
 }
