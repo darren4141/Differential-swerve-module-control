@@ -13,6 +13,8 @@ float previousTime[] = {0, 0};
 float previousLogTime = 0;
 int previousEncoderCount = 0;
 
+float currentSpeed;
+
 void setup() {
   // put your setup code here, to run once:
   pinMode(fwdPin1, OUTPUT);
@@ -39,7 +41,9 @@ void loop() {
 //  analogWrite(enablePin2, 255);
 
 
-  float pwr1 = calculatePID(0, 1000, 1, 0.4, 0.01);
+  float currentSpeed = logSpeed(0);
+
+  float pwr1 = calculatePID(0, 1000, currentSpeed 1, 0.4, 0.01);
 
   if(pwr1 > 0){
     analogWrite(enablePin1, abs(pwr1));
@@ -69,11 +73,11 @@ void tickEncoder2(){
   }
 }
 
-float calculatePID(int motorNum, int target, float kP, float kI, float kD){
+float calculatePID(int motorNum, float targetSpeed, float currentSpeed, float kP, float kI, float kD){
   long currentTime = micros();
   float dT = ((float)(currentTime - previousTime[motorNum])) / 1.0e6;
 
-  int eP = target - encoderCount[motorNum];
+  int eP = targetSpeed - currentSpeed;
   eI[motorNum] = eI[motorNum] + (eP * dT);
   float eD = (eP - ePPrevious[motorNum])/dT;
 
