@@ -11,10 +11,16 @@ const int encA2 = 22;
 const int encB2 = 23;
 
 int encoderCount[] = {0, 0};
+int encoderCountPrevious[] = {0, 0};
+int speedPrevious = 0;
 
 float eI[] = {0, 0};
 float ePPrevious[] = {0, 0};
 float previousTime[] = {0, 0};
+
+float previousPwr = 0;
+int cycle = 0;
+float prevPIDcalculate = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -39,6 +45,7 @@ void setup() {
 }
 
 void loop() {
+  cycle++;
   // put your main code here, to run repeatedly:
 //  digitalWrite(fwdPin1, HIGH);
 //  digitalWrite(bwdPin1, LOW);
@@ -50,7 +57,17 @@ void loop() {
 //  analogWrite(enablePin2, 255);
 
 
-  float pwr1 = calculatePID(0, 1000, 1, 0.4, 0.01);
+  // float pwr1 = calculatePositionPID(0, 1000, 0.7, 0.08, 0.1);
+  // float pwr1 = calculateSpeedPID(0, 200000000, 1, 0, 0);
+  float pwr1;
+
+  if(cycle % 20 == 0){
+    pwr1 = calculateSpeedPID(0, 150, 0.1, 0, 0);
+    prevPIDcalculate = pwr1;
+  }else{
+    pwr1 =  prevPIDcalculate;
+  }
+
 
   if(pwr1 > 0){
     analogWrite(enablePin1, abs(pwr1));
@@ -62,21 +79,21 @@ void loop() {
     digitalWrite(bwdPin1, HIGH);
   }
 
-  float pwr2 = calculatePID(1, 1000, 1, 0.4, 0.01);
+  // float pwr2 = calculatePID(1, 1000, 0.1, 0, 0);
 
-  if(pwr2 > 0){
-    analogWrite(enablePin2, abs(pwr2));
-    digitalWrite(fwdPin2, HIGH);
-    digitalWrite(bwdPin2, LOW);
-  }else{
-    analogWrite(enablePin2, abs(pwr2));
-    digitalWrite(fwdPin2, LOW);
-    digitalWrite(bwdPin2, HIGH);
-  }
+  // if(pwr2 > 0){
+  //   analogWrite(enablePin2, abs(pwr2));
+  //   digitalWrite(fwdPin2, HIGH);
+  //   digitalWrite(bwdPin2, LOW);
+  // }else{
+  //   analogWrite(enablePin2, abs(pwr2));
+  //   digitalWrite(fwdPin2, LOW);
+  //   digitalWrite(bwdPin2, HIGH);
+  // }
   
-  Serial.print(encoderCount[0]);
-  Serial.print(", ");
-  Serial.println(encoderCount[1]);
+  Serial.println(encoderCount[0]);
+  // Serial.print(", ");
+  // Serial.println(encoderCount[1]);
 }
 
 void tickEncoder1(){
@@ -95,7 +112,7 @@ void tickEncoder2(){
   }
 }
 
-float calculatePID(int motorNum, int target, float kP, float kI, float kD){
+float calculatePositionPID(int motorNum, int target, float kP, float kI, float kD){
   long currentTime = micros();
   float dT = ((float)(currentTime - previousTime[motorNum])) / 1.0e6;
 
@@ -105,6 +122,15 @@ float calculatePID(int motorNum, int target, float kP, float kI, float kD){
 
   previousTime[motorNum] = currentTime;
   ePPrevious[motorNum] = eP;
+
+  Serial.print("eP: ");
+  Serial.print(eP);
+  Serial.print(", eI: ");
+  Serial.print(eI[motorNum]);
+  Serial.print(", eD: ");
+  Serial.print(eD);
+  Serial.print(" | ");
+
 
   float pwr = (kP * eP) + (kI * eI[motorNum]) + (kD * eD);
 
@@ -117,4 +143,58 @@ float calculatePID(int motorNum, int target, float kP, float kI, float kD){
   }
 
   return pwr;
+}
+
+float calculateSpeedPID(int motorNum, int target, float kP, float kI, float kD){
+  long currentTime = micros();
+  float dT = ((float)(currentTime - previousTime[motorNum])) / 1.0e6;
+
+  int speed = (encoderCount[motorNum] - encoderCountPrevious[motorNum])/dT;
+
+  if(speed == 0){//speed - speedPrevious > 100
+    speed = speedPrevious;
+  }
+  encoderCountPrevious[motorNum] = encoderCount[motorNum];
+
+  int eP = target - speed;
+  eI[motorNum] = eI[motorNum] + (eP * dT);
+  float eD = (eP - ePPrevious[motorNum])/dT;
+
+  previousTime[motorNum] = currentTime;
+  ePPrevious[motorNum] = eP;
+  speedPrevious = speed;
+/*
+
+SPEED RPM:
+
+P: RPM
+I: integral of RPM
+D: Change in RPM
+
+*/
+
+  // Serial.print("eP: ");
+  // Serial.print(eP);
+  // Serial.print(", eI: ");
+  // Serial.print(eI[motorNum]);
+  // Serial.print(", eD: ");
+  // Serial.print(eD);
+  Serial.print(" | SPEED: ");
+  Serial.print(speed);
+  Serial.print(" | ");
+
+
+  float pwr = (kP * eP) + (kI * eI[motorNum]) + (kD * eD);
+
+  if(abs(pwr) > 255){
+    if(pwr > 0){
+      pwr = 255;
+    }else{
+      pwr = -255;
+    }
+  }
+
+  previousPwr = previousPwr + pwr;
+
+  return previousPwr;
 }
