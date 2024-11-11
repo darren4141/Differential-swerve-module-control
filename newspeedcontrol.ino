@@ -63,7 +63,7 @@ void loop() {
   float pwr1;
 
   if(cycle % 20 == 0){
-    pwr1 = calculateSpeedPID(0, 200, 0.1, 0, 0);
+    pwr1 = calculateSpeedPID(0, 150, 0.1, 0, 0);
     prevPID1calculate = pwr1;
   }else{
     pwr1 =  prevPID1calculate;
@@ -82,28 +82,27 @@ void loop() {
 
   // float pwr2 = calculatePID(1, 1000, 0.1, 0, 0);
 
-  float pwr2;
+  // float pwr2;
 
-  if(cycle % 20 == 0){
-    pwr2 = calculateSpeedPID(0, 200, 0.1, 0, 0);
-    prevPID2calculate = pwr2;
-  }else{
-    pwr2 =  prevPID2calculate;
-  }
+  // if(cycle+10 % 20 == 0){
+  //   pwr2 = calculateSpeedPID(1, 150, 0.1, 0, 0);
+  //   prevPID2calculate = pwr2;
+  // }else{
+  //   pwr2 =  prevPID2calculate;
+  // }
 
-  if(pwr2 > 0){
-    analogWrite(enablePin2, abs(pwr2));
-    digitalWrite(fwdPin2, HIGH);
-    digitalWrite(bwdPin2, LOW);
-  }else{
-    analogWrite(enablePin2, abs(pwr2));
-    digitalWrite(fwdPin2, LOW);
-    digitalWrite(bwdPin2, HIGH);
-  }
+  // if(pwr2 > 0){
+  //   analogWrite(enablePin2, abs(pwr2));
+  //   digitalWrite(fwdPin2, HIGH);
+  //   digitalWrite(bwdPin2, LOW);
+  // }else{
+  //   analogWrite(enablePin2, abs(pwr2));
+  //   digitalWrite(fwdPin2, LOW);
+  //   digitalWrite(bwdPin2, HIGH);
+  // }
   
-  Serial.print(encoderCount[0]);
-  Serial.print(", ");
-  Serial.println(encoderCount[1]);
+  // Serial.println(encoderCount[0]);
+  // Serial.println(encoderCount[1]);
 }
 
 void tickEncoder1(){
@@ -189,9 +188,11 @@ D: Change in RPM
   // Serial.print(eI[motorNum]);
   // Serial.print(", eD: ");
   // Serial.print(eD);
-  Serial.print(" | SPEED: ");
+  Serial.print(" | SPEED ");
+  Serial.print(motorNum);
+  Serial.print(": ");
   Serial.print(speed);
-  Serial.print(" | ");
+  Serial.println(" | ");
 
 
   float pwr = (kP * eP) + (kI * eI[motorNum]) + (kD * eD);
