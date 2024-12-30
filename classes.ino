@@ -10,8 +10,6 @@ const int enablePin2 = 5;
 const int encA2 = 22;
 const int encB2 = 23;
 
-int encoderCount[] = {0, 0};
-
 class Motor{
   public:
     Motor(int new_fwdPin, int new_bwdPin, int new_enablePin): fwdPin(new_fwdPin), bwdPin(new_bwdPin), enablePin(new_enablePin)
@@ -59,8 +57,31 @@ class Motor{
     int encoderCount;
 };
 
+class Module{
+  public:
+    Module(Motor& new_motor1, Motor& new_motor2): motor1(new_motor1), motor2(new_motor2){
+        motor1.initialize();
+        motor2.initialize();
+    }
+
+    void setPower(int power){
+      motor1.setPower(power);
+      motor2.setPower(-pwer);
+    }
+
+  int getEncoderOffset(){
+    return (motor2.getEncoderCount()) + (motor1.getEncoderCount());
+  }
+
+  private:
+    Motor& motor1;
+    Motor& motor2;
+};
+
 Motor motor1(2, 4, 15);
 Motor motor2(18, 19, 5);
+
+Module module(motor1, motor2);
 
 void tickEncoder1(){
   if(digitalRead(encA1) > digitalRead(encB1)){
@@ -78,11 +99,7 @@ void tickEncoder2(){
   }
 }
 
-
 void setup() {
-  // put your setup code here, to run once:
-  motor1.initialize();
-  motor2.initialize();
   pinMode(encA1, INPUT);
   pinMode(encB1, INPUT);
   pinMode(encA2, INPUT);
@@ -94,9 +111,10 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  motor1.setPower(-255);
-  motor2.setPower(255);
-  Serial.println(motor1.getEncoderCount());
-  Serial.println(motor2.getEncoderCount());
+  module.setSpeed(200);
+  Serial.print(motor1.getEncoderCount());
+  Serial.print(" | ");
+  Serial.print(motor2.getEncoderCount());
+  Serial.print(" | ");
+  Serial.println(module.getEncoderOffset());
 }
