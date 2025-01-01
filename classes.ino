@@ -10,6 +10,8 @@ const int enablePin2 = 5;
 const int encA2 = 22;
 const int encB2 = 23;
 
+int cycle = 0;
+
 class Motor {
 public:
   Motor(int new_fwdPin, int new_bwdPin, int new_enablePin): fwdPin(new_fwdPin), bwdPin(new_bwdPin), enablePin(new_enablePin) {
@@ -40,13 +42,15 @@ public:
     }
   }
 
-  float setSpeed(float targetSpeed){
+  void setSpeed(float targetSpeed){
     long currentTime = micros();
     float dT = ((float)(currentTime - previousTime)) / 1.0e6;
     float speed = (encoderCount - prevEncoderCount) / dT;
 
-    if(speed == 0){
-      speed = speedPrevious;
+    if((cycle % 50) != 0){
+
+      setPower(previousPower);
+      return;
     }
 
     float eP = targetSpeed - speed;
@@ -61,15 +65,10 @@ public:
     float power = (PIDconstants[0] * eP) + (PIDconstants[1] * eI) + (PIDconstants[2] * eD);
 
     if(abs(power) > 255){
-      if(power > 0){
-        power = 255;
-      }else{
-        power = -255;
-      }
+      power = 255;
     }
     previousPower = previousPower + power;
-    return previousPower;
-    // setPower(previousPower);
+    setPower(previousPower);
   }
 
   int getEncoderCount() {
@@ -86,6 +85,10 @@ public:
 
   void decEncoderCount() {
     encoderCount--;
+  }
+
+  float getSpeed(){
+    return speedPrevious;
   }
 
 private:
@@ -152,45 +155,27 @@ void setup() {
   pinMode(encB2, INPUT);
   attachInterrupt(digitalPinToInterrupt(encA1), tickEncoder1, RISING);
   attachInterrupt(digitalPinToInterrupt(encA2), tickEncoder2, RISING);
-  motor1.setPIDconstants(0.1, 0, 0);
-  motor2.setPIDconstants(0.1, 0, 0);
+  motor1.setPIDconstants(0.75, 0.005, 0.01);
+  motor2.setPIDconstants(0.75, 0.005, 0.01);
   Serial.begin(9600);
 }
 
-int cycle = 0;
 float previousCalculate = 0;
 float previousCalculate2 = 0;
 
 
 void loop() {
   cycle++;
-  // module.setPower(200);
-  // Serial.print(motor1.getEncoderCount());
-  // Serial.print(" | ");
-  // Serial.print(motor2.getEncoderCount());
-  // Serial.print(" | ");
-  // Serial.println(module.getEncoderOffset());
-  float pwr;
-  if(cycle % 50 == 0){
-    pwr = motor1.setSpeed(200);
-    motor1.setPower(pwr);
-    previousCalculate = pwr;
-  }else{
-    pwr = previousCalculate;
-    motor1.setPower(pwr);
-  }
-  // Serial.println((int)pwr);
 
-  float pwr2;
-  if(cycle % 50 == 0){
-    pwr2 = motor2.setSpeed(-200);
-    motor2.setPower(pwr2);
-    previousCalculate2 = pwr2;
-  }else{
-    pwr2 = previousCalculate2;
-    motor2.setPower(pwr2);
-  }
-  // Serial.println((int)pwr2);
-  Serial.println(module.getEncoderOffset());
+  motor1.setSpeed(200);
+  motor2.setSpeed(-200);
+
+  // motor1.setSpeed(300, true);
+  // motor2.setSpeed(300, false);
+  Serial.print(motor1.getSpeed());
+  Serial.print(" | ");
+  Serial.println(motor2.getSpeed());
+  // Serial.println(motor2.getSpeed());
+  // Serial.println(module.getEncoderOffset());
   
 }
