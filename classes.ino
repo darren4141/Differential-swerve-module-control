@@ -118,6 +118,11 @@ public:
     motor2.setPower(-power);
   }
 
+  void setSpeed(int speed){
+    motor1.setSpeed(speed);
+    motor2.setSpeed(-speed);
+  }
+
   int getEncoderOffset() {
     return (motor2.getEncoderCount()) + (motor1.getEncoderCount());
   }
@@ -166,9 +171,8 @@ float previousCalculate2 = 0;
 
 void loop() {
   cycle++;
-
-  motor1.setSpeed(200);
-  motor2.setSpeed(-200);
+  
+  module.setSpeed(200);
 
   // motor1.setSpeed(300, true);
   // motor2.setSpeed(300, false);
