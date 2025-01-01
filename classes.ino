@@ -24,10 +24,11 @@ public:
     pinMode(bwdPin, OUTPUT);
   }
 
-  void setPIDconstants(double kP, double kI, double kD){
+  void setPIDconstants(double kP, double kI, double kD, double kD2){
     PIDconstants[0] = kP;
     PIDconstants[1] = kI;
     PIDconstants[2] = kD;
+    PIDconstants[3] = kD2;
   }
 
   void setPower(int power) {
@@ -42,12 +43,15 @@ public:
     }
   }
 
-  void setSpeed(float targetSpeed){
+  void setSpeed(float targetSpeed, int pollingRate){
     long currentTime = micros();
     float dT = ((float)(currentTime - previousTime)) / 1.0e6;
     float speed = (encoderCount - prevEncoderCount) / dT;
 
-    if((cycle % 50) != 0){
+    //0.0002x^2 - 0.134x + 26.2
+
+
+    if((cycle % pollingRate) != 0){
 
       setPower(previousPower);
       return;
@@ -62,7 +66,13 @@ public:
     ePPrevious = eP;
     speedPrevious = speed;
 
-    float power = (PIDconstants[0] * eP) + (PIDconstants[1] * eI) + (PIDconstants[2] * eD);
+    float power;
+
+    if(abs(targetSpeed) > 100){
+      power = (PIDconstants[0] * eP) + (PIDconstants[1] * eI) + (PIDconstants[2] * eD);
+    }else{
+      power = (PIDconstants[0] * eP) + (PIDconstants[1] * eI) + (PIDconstants[3] * eD);
+    }
 
     if(abs(power) > 255){
       power = 255;
@@ -118,9 +128,9 @@ public:
     motor2.setPower(-power);
   }
 
-  void setSpeed(int speed){
-    motor1.setSpeed(speed);
-    motor2.setSpeed(-speed);
+  void setSpeed(int speed, int pollingRate){
+    motor1.setSpeed(speed, pollingRate);
+    motor2.setSpeed(-speed, pollingRate);
   }
 
   int getEncoderOffset() {
@@ -153,6 +163,11 @@ void tickEncoder2() {
   }
 }
 
+double kP = 0.5;
+double kI = 0;
+double kD = 0;
+double kD2 = 0.125;
+
 void setup() {
   pinMode(encA1, INPUT);
   pinMode(encB1, INPUT);
@@ -160,25 +175,39 @@ void setup() {
   pinMode(encB2, INPUT);
   attachInterrupt(digitalPinToInterrupt(encA1), tickEncoder1, RISING);
   attachInterrupt(digitalPinToInterrupt(encA2), tickEncoder2, RISING);
-  motor1.setPIDconstants(0.75, 0.005, 0.01);
-  motor2.setPIDconstants(0.75, 0.005, 0.01);
+  motor1.setPIDconstants(kP, kI, kD, kD2);
+  motor2.setPIDconstants(kP, kI, kD, kD2);
   Serial.begin(9600);
 }
 
 float previousCalculate = 0;
 float previousCalculate2 = 0;
 
+int speed = 135;
+int pollingRate = round((double)(0.0002 * speed * speed) - (0.134 * speed) + 27.2);
 
 void loop() {
   cycle++;
-  
-  module.setSpeed(200);
+  if(Serial.available() > 0){
+    speed = Serial.read();
+  }
 
+  module.setSpeed(speed, pollingRate);
   // motor1.setSpeed(300, true);
   // motor2.setSpeed(300, false);
   Serial.print(motor1.getSpeed());
   Serial.print(" | ");
-  Serial.println(motor2.getSpeed());
+  Serial.print(motor2.getSpeed());
+  Serial.print(" | ");
+  Serial.print(speed);
+  Serial.print(" | ");
+  Serial.print(-speed);
+  Serial.print(" | ");
+  Serial.print(pollingRate);
+  Serial.print(" | ");
+  Serial.println(module.getEncoderOffset());
+
+
   // Serial.println(motor2.getSpeed());
   // Serial.println(module.getEncoderOffset());
   
