@@ -24,7 +24,7 @@ public:
     pinMode(bwdPin, OUTPUT);
   }
 
-  void setPIDconstants(double kP, double kI, double kD, double kD2){
+  void setSpeedPIDconstants(double kP, double kI, double kD, double kD2){
     PIDconstants[0] = kP;
     PIDconstants[1] = kI;
     PIDconstants[2] = kD;
@@ -48,11 +48,7 @@ public:
     float dT = ((float)(currentTime - previousTime)) / 1.0e6;
     float speed = (encoderCount - prevEncoderCount) / dT;
 
-    //0.0002x^2 - 0.134x + 26.2
-
-
     if((cycle % pollingRate) != 0){
-
       setPower(previousPower);
       return;
     }
@@ -106,7 +102,7 @@ private:
   int bwdPin;
   int enablePin;
   int encoderCount;
-  float PIDconstants[6] = {};
+  float PIDconstants[4] = {};
   int prevEncoderCount = 0;
   long previousTime = 0;
   float speedPrevious = 0;
@@ -128,18 +124,63 @@ public:
     motor2.setPower(-power);
   }
 
+  void turn(int power){
+    motor1.setPower(power);
+    motor2.setPower(power);
+  }
+
   void setSpeed(int speed, int pollingRate){
     motor1.setSpeed(speed, pollingRate);
     motor2.setSpeed(-speed, pollingRate);
+  }
+
+  void setPIDconstants(float kP, float kI, float kD){
+    PIDconstants[0] = kP;
+    PIDconstants[1] = kI;
+    PIDconstants[2] = kD;
+  }
+
+  void turnToAngle(float targetAngle){
+    long currentTime = micros();
+    float dT = ((float)(currentTime - previousTime))/1.0e6;
+
+    float eP = targetAngle - getAngle();
+    eI = eI + (eP * dT);
+    float eD = (eP - ePPrevious)/dT;
+
+    int power = (int)((eP * PIDconstants[0]) + (eI * PIDconstants[1]) + (eD * PIDconstants[2]));
+
+    if(abs(power) > 255){
+      if(power < 0){
+        power = -255;
+      }else{
+        power = 255;
+      }
+    }
+
+    Serial.print(power);
+    Serial.print(" | ");
+
+    turn(power);
+
   }
 
   int getEncoderOffset() {
     return (motor2.getEncoderCount()) + (motor1.getEncoderCount());
   }
 
+  double getAngle(){
+    return (double)(((motor1.getEncoderCount() + motor2.getEncoderCount()) % 25000) * 0.0144); // 0.0144 is equivalent to * 360 / 25000
+  }
+
+
 private:
   Motor& motor1;
   Motor& motor2;
+  float PIDconstants[3] = {};
+  float previousTime = 0;
+  float eI = 0;
+  float ePPrevious = 0;
 };
 
 Motor motor1(2, 4, 15);
@@ -175,16 +216,18 @@ void setup() {
   pinMode(encB2, INPUT);
   attachInterrupt(digitalPinToInterrupt(encA1), tickEncoder1, RISING);
   attachInterrupt(digitalPinToInterrupt(encA2), tickEncoder2, RISING);
-  motor1.setPIDconstants(kP, kI, kD, kD2);
-  motor2.setPIDconstants(kP, kI, kD, kD2);
+  motor1.setSpeedPIDconstants(kP, kI, kD, kD2);
+  motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
+  module.setPIDconstants(5, 0, 0);//raise P, add an I term
   Serial.begin(9600);
 }
 
 float previousCalculate = 0;
 float previousCalculate2 = 0;
 
-int speed = 135;
+int speed = 250;
 int pollingRate = round((double)(0.0002 * speed * speed) - (0.134 * speed) + 27.2);
+//0.0002x^2 - 0.134x + 26.2
 
 void loop() {
   cycle++;
@@ -192,20 +235,27 @@ void loop() {
     speed = Serial.read();
   }
 
-  module.setSpeed(speed, pollingRate);
+  // module.setSpeed(speed, pollingRate);
+  
+  module.turnToAngle(90);
+  // Serial.println(module.getEncoderOffset());
+  Serial.println(module.getAngle());
+
   // motor1.setSpeed(300, true);
   // motor2.setSpeed(300, false);
-  Serial.print(motor1.getSpeed());
-  Serial.print(" | ");
-  Serial.print(motor2.getSpeed());
-  Serial.print(" | ");
-  Serial.print(speed);
-  Serial.print(" | ");
-  Serial.print(-speed);
-  Serial.print(" | ");
-  Serial.print(pollingRate);
-  Serial.print(" | ");
-  Serial.println(module.getEncoderOffset());
+  // Serial.print(motor1.getSpeed());
+  // Serial.print(" | ");
+  // Serial.print(motor2.getSpeed());
+  // Serial.print(" | ");
+  // Serial.print(speed);
+  // Serial.print(" | ");
+  // Serial.print(-speed);
+  // Serial.print(" | ");
+  // Serial.print(pollingRate);
+  // Serial.print(" | ");
+  // Serial.print(module.getEncoderOffset());
+  // Serial.print(" | ");
+  // Serial.println(module.getAngle());
 
 
   // Serial.println(motor2.getSpeed());
