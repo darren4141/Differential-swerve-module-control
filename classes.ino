@@ -218,7 +218,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encA2), tickEncoder2, RISING);
   motor1.setSpeedPIDconstants(kP, kI, kD, kD2);
   motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
-  module.setPIDconstants(5, 0, 0);//raise P, add an I term
+  module.setPIDconstants(100, 0, 0);//raise P, add an I term
   Serial.begin(9600);
 }
 
