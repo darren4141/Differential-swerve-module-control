@@ -44,6 +44,11 @@ public:
   }
 
   void setSpeed(float targetSpeed, int pollingRate){
+    if(targetSpeed == 0){
+      setPower(0);
+      return;
+    }
+
     long currentTime = micros();
     float dT = ((float)(currentTime - previousTime)) / 1.0e6;
     float speed = (encoderCount - prevEncoderCount) / dT;
@@ -129,7 +134,7 @@ public:
     motor2.setPower(power);
   }
 
-  void setSpeed(int speed, int pollingRate){
+  void setSpeed(float speed, int pollingRate){
     motor1.setSpeed(speed, pollingRate);
     motor2.setSpeed(-speed, pollingRate);
   }
@@ -169,8 +174,18 @@ public:
     return (motor2.getEncoderCount()) + (motor1.getEncoderCount());
   }
 
-  double getAngle(){
-    return (double)(((motor1.getEncoderCount() + motor2.getEncoderCount()) % 25000) * 0.0144); // 0.0144 is equivalent to * 360 / 25000
+  float getAngle(){
+    return (float)(((motor1.getEncoderCount() + motor2.getEncoderCount()) % 25000) * 0.0144); // 0.0144 is equivalent to * 360 / 25000
+  }
+
+  void update(){
+    float currentAngle = getAngle();
+
+    if(abs(currentAngle - targetAngle) > 3){//3 degree tolerance
+      turnToAngle(targetAngle);
+    }else{
+      setSpeed(targetSpeed);
+    }
   }
 
 
@@ -181,6 +196,8 @@ private:
   float previousTime = 0;
   float eI = 0;
   float ePPrevious = 0;
+  float targetAngle = 0;
+  float targetSpeed = 0;
 };
 
 Motor motor1(2, 4, 15);
