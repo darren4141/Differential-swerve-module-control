@@ -135,8 +135,10 @@ public:
   }
 
   void setSpeed(float speed, int pollingRate){
-    motor1.setSpeed(speed, pollingRate);
-    motor2.setSpeed(-speed, pollingRate);
+    float adjustedError = 0;
+    //calculate adjusted error using a PID loop, using targetAngle - getAngle() as e(t)
+    motor1.setSpeed(speed - adjustedError, pollingRate);
+    motor2.setSpeed(-speed + adjustedError, pollingRate);
   }
 
   void setPIDconstants(float kP, float kI, float kD){
@@ -163,8 +165,8 @@ public:
       }
     }
 
-    Serial.print(power);
-    Serial.print(" | ");
+    // Serial.print(power);
+    // Serial.print(" | ");
 
     turn(power);
 
@@ -180,14 +182,24 @@ public:
 
   void update(){
     float currentAngle = getAngle();
+    setSpeed(targetSpeed, 6); //temporarily 6 but i need to make a lookup table
 
+    Serial.println(abs(currentAngle - targetAngle));
     if(abs(currentAngle - targetAngle) > 3){//3 degree tolerance
+
       turnToAngle(targetAngle);
     }else{
-      setSpeed(targetSpeed);
+      setSpeed(targetSpeed, 6); //temporarily 6 but i need to make a lookup table
     }
   }
 
+  void setTargetSpeed(float new_targetSpeed){
+    targetSpeed = new_targetSpeed;
+  }
+
+  void setTargetAngle(float new_targetAngle){
+    targetAngle = new_targetAngle;
+  }
 
 private:
   Motor& motor1;
@@ -237,6 +249,8 @@ void setup() {
   motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
   module.setPIDconstants(100, 0, 0);//raise P, add an I term
   Serial.begin(9600);
+  module.setTargetSpeed(200);
+  // module.setTargetAngle(30);
 }
 
 float previousCalculate = 0;
@@ -248,15 +262,16 @@ int pollingRate = round((double)(0.0002 * speed * speed) - (0.134 * speed) + 27.
 
 void loop() {
   cycle++;
-  if(Serial.available() > 0){
-    speed = Serial.read();
-  }
+  // if(Serial.available() > 0){
+  //   speed = Serial.read();
+  // }
 
   // module.setSpeed(speed, pollingRate);
   
-  module.turnToAngle(90);
+  // module.turnToAngle(90);
   // Serial.println(module.getEncoderOffset());
-  Serial.println(module.getAngle());
+  // Serial.println(module.getAngle());
+    module.update();
 
   // motor1.setSpeed(300, true);
   // motor2.setSpeed(300, false);
