@@ -69,10 +69,10 @@ public:
 
     float power;
 
-    if(abs(targetSpeed) > 100){
+    if(abs(targetSpeed) > 125){
       power = (PIDconstants[0] * eP) + (PIDconstants[1] * eI) + (PIDconstants[2] * eD);
     }else{
-      power = (PIDconstants[0] * eP) + (PIDconstants[1] * eI) + (PIDconstants[3] * eD);
+      power = (PIDconstants[0] * eP * 0.75) + (PIDconstants[1] * eI) + (PIDconstants[2] * eD);
     }
 
     if(abs(power) > 255){
@@ -256,9 +256,13 @@ void setup() {
 float previousCalculate = 0;
 float previousCalculate2 = 0;
 
-int speed = 250;
-int pollingRate = round((double)(0.0002 * speed * speed) - (0.134 * speed) + 27.2);
+int speed = 100;
+// int pollingRate = round((double)(0.0002 * speed * speed) - (0.134 * speed) + 27.2);
 //0.0002x^2 - 0.134x + 26.2
+int pollingRate = round((double)(-0.00009 *speed *speed) + (0.0022 * speed) + 10.972);
+
+//y = -0.00009x^2 + 0.0022x + 10.972
+
 
 void loop() {
   cycle++;
@@ -266,12 +270,17 @@ void loop() {
   //   speed = Serial.read();
   // }
 
-  // module.setSpeed(speed, pollingRate);
-  
+  module.setSpeed(speed, pollingRate);
   // module.turnToAngle(90);
-  // Serial.println(module.getEncoderOffset());
+  Serial.print(motor1.getSpeed());
+  Serial.print(" | ");
+  Serial.print(motor2.getSpeed());
+  Serial.print(" | ");
+  Serial.print(module.getEncoderOffset());
+  Serial.print(" | ");
+  Serial.println(pollingRate);
   // Serial.println(module.getAngle());
-    module.update();
+    // module.update();
 
   // motor1.setSpeed(300, true);
   // motor2.setSpeed(300, false);
