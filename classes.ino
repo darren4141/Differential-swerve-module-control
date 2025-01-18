@@ -10,6 +10,8 @@ const int enablePin2 = 5;
 const int encA2 = 22;
 const int encB2 = 23;
 
+const int pollingRateLookup[261] = {11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6};
+
 int cycle = 0;
 
 class Motor {
@@ -43,10 +45,18 @@ public:
     }
   }
 
-  void setSpeed(float targetSpeed, int pollingRate){
+  void setSpeed(float targetSpeed){
     if(targetSpeed == 0){
       setPower(0);
       return;
+    }
+
+
+    int pollingRate;
+    if(abs(targetSpeed) > 260){
+      pollingRate = 5;
+    }else{
+      pollingRate = pollingRateLookup[abs((int)round(targetSpeed))];
     }
 
     long currentTime = micros();
@@ -134,11 +144,11 @@ public:
     motor2.setPower(power);
   }
 
-  void setSpeed(float speed, int pollingRate){
+  void setSpeed(float speed){
     float adjustedError = 0;
     //calculate adjusted error using a PID loop, using targetAngle - getAngle() as e(t)
-    motor1.setSpeed(speed - adjustedError, pollingRate);
-    motor2.setSpeed(-speed + adjustedError, pollingRate);
+    motor1.setSpeed(speed);
+    motor2.setSpeed(-speed);
   }
 
   void setPIDconstants(float kP, float kI, float kD){
@@ -182,14 +192,14 @@ public:
 
   void update(){
     float currentAngle = getAngle();
-    setSpeed(targetSpeed, 6); //temporarily 6 but i need to make a lookup table
+    setSpeed(targetSpeed); //temporarily 6 but i need to make a lookup table
 
     Serial.println(abs(currentAngle - targetAngle));
     if(abs(currentAngle - targetAngle) > 3){//3 degree tolerance
 
       turnToAngle(targetAngle);
     }else{
-      setSpeed(targetSpeed, 6); //temporarily 6 but i need to make a lookup table
+      setSpeed(targetSpeed); //temporarily 6 but i need to make a lookup table
     }
   }
 
@@ -256,12 +266,11 @@ void setup() {
 float previousCalculate = 0;
 float previousCalculate2 = 0;
 
-int speed = 100;
+int speed = 250;
 // int pollingRate = round((double)(0.0002 * speed * speed) - (0.134 * speed) + 27.2);
 //0.0002x^2 - 0.134x + 26.2
-int pollingRate = round((double)(-0.00009 *speed *speed) + (0.0022 * speed) + 10.972);
-
-//y = -0.00009x^2 + 0.0022x + 10.972
+// int pollingRate = round((double)(-0.00009 *speed *speed) + (0.0022 * speed) + 10.972);
+//-0.00009x^2 + 0.0022x + 10.972
 
 
 void loop() {
@@ -270,7 +279,7 @@ void loop() {
   //   speed = Serial.read();
   // }
 
-  module.setSpeed(speed, pollingRate);
+  module.setSpeed(speed);
   // module.turnToAngle(90);
   Serial.print(motor1.getSpeed());
   Serial.print(" | ");
@@ -278,7 +287,7 @@ void loop() {
   Serial.print(" | ");
   Serial.print(module.getEncoderOffset());
   Serial.print(" | ");
-  Serial.println(pollingRate);
+  Serial.println(pollingRateLookup[speed]);
   // Serial.println(module.getAngle());
     // module.update();
 
