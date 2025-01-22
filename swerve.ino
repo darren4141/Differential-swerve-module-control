@@ -10,13 +10,14 @@ const int enablePin2 = 5;
 const int encA2 = 22;
 const int encB2 = 23;
 
-const int pollingRateLookup[261] = {11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6};
+const int pollingRateLookup[261] = { 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 };
 
 int cycle = 0;
 
 class Motor {
 public:
-  Motor(int new_fwdPin, int new_bwdPin, int new_enablePin): fwdPin(new_fwdPin), bwdPin(new_bwdPin), enablePin(new_enablePin) {
+  Motor(int new_fwdPin, int new_bwdPin, int new_enablePin)
+    : fwdPin(new_fwdPin), bwdPin(new_bwdPin), enablePin(new_enablePin) {
     encoderCount = 0;
     prevEncoderCount = 0;
   }
@@ -26,7 +27,7 @@ public:
     pinMode(bwdPin, OUTPUT);
   }
 
-  void setSpeedPIDconstants(double kP, double kI, double kD, double kD2){
+  void setSpeedPIDconstants(double kP, double kI, double kD, double kD2) {
     PIDconstants[0] = kP;
     PIDconstants[1] = kI;
     PIDconstants[2] = kD;
@@ -45,17 +46,17 @@ public:
     }
   }
 
-  void setSpeed(float targetSpeed){
-    if(targetSpeed == 0){
+  void setSpeed(float targetSpeed) {
+    if (targetSpeed == 0) {
       setPower(0);
       return;
     }
 
 
     int pollingRate;
-    if(abs(targetSpeed) > 260){
+    if (abs(targetSpeed) > 260) {
       pollingRate = 5;
-    }else{
+    } else {
       pollingRate = pollingRateLookup[abs((int)round(targetSpeed))];
     }
 
@@ -63,14 +64,14 @@ public:
     float dT = ((float)(currentTime - previousTime)) / 1.0e6;
     float speed = (encoderCount - prevEncoderCount) / dT;
 
-    if((cycle % pollingRate) != 0){
+    if ((cycle % pollingRate) != 0) {
       setPower(previousPower);
       return;
     }
 
     float eP = targetSpeed - speed;
-    eI = eI + (eP*dT);
-    float eD = (eP - ePPrevious)/dT;
+    eI = eI + (eP * dT);
+    float eD = (eP - ePPrevious) / dT;
 
     prevEncoderCount = encoderCount;
     previousTime = currentTime;
@@ -79,13 +80,13 @@ public:
 
     float power;
 
-    if(abs(targetSpeed) > 125){
+    if (abs(targetSpeed) > 125) {
       power = (PIDconstants[0] * eP) + (PIDconstants[1] * eI) + (PIDconstants[2] * eD);
-    }else{
+    } else {
       power = (PIDconstants[0] * eP * 0.75) + (PIDconstants[1] * eI) + (PIDconstants[2] * eD);
     }
 
-    if(abs(power) > 255){
+    if (abs(power) > 255) {
       power = 255;
     }
     previousPower = previousPower + power;
@@ -108,7 +109,7 @@ public:
     encoderCount--;
   }
 
-  float getSpeed(){
+  float getSpeed() {
     return speedPrevious;
   }
 
@@ -139,38 +140,53 @@ public:
     motor2.setPower(-power);
   }
 
-  void turn(int power){
+  void turn(int power) {
     motor1.setPower(power);
     motor2.setPower(power);
   }
 
-  void setSpeed(float speed){
+  void setSpeed(float speed) {
     float adjustedError = 0;
     //calculate adjusted error using a PID loop, using targetAngle - getAngle() as e(t)
-    motor1.setSpeed(speed);
-    motor2.setSpeed(-speed);
+    long currentTime = micros();
+    float dT = ((float)(currentTime - previousTime)) / 1e06;
+
+    float eP = targetAngle - getAngle();
+    eI = eI + (eP * dT);
+    float eD = (eP - ePPrevious) / dT;
+
+    float adjustedError = (int)((eP * PIDconstants[3]) + (eI * PIDconstants[4]) + (eD * PIDconstants[5]))
+
+    motor1.setSpeed(speed - adjustedError);
+    motor2.setSpeed(-speed + adjustedError);
   }
 
-  void setPIDconstants(float kP, float kI, float kD){
+  void setPIDconstants(float kP, float kI, float kD) {
     PIDconstants[0] = kP;
     PIDconstants[1] = kI;
     PIDconstants[2] = kD;
   }
 
-  void turnToAngle(float targetAngle){
+  void setSpeedAdjPIDconstants(float kP, float kI, float kD){
+    PIDconstants[3] = kP;
+    PIDconstants[4] = kI;
+    PIDconstants[5] = kD;
+  }
+
+  void turnToAngle(float targetAngle) {
     long currentTime = micros();
-    float dT = ((float)(currentTime - previousTime))/1.0e6;
+    float dT = ((float)(currentTime - previousTime)) / 1.0e6;
 
     float eP = targetAngle - getAngle();
     eI = eI + (eP * dT);
-    float eD = (eP - ePPrevious)/dT;
+    float eD = (eP - ePPrevious) / dT;
 
     int power = (int)((eP * PIDconstants[0]) + (eI * PIDconstants[1]) + (eD * PIDconstants[2]));
 
-    if(abs(power) > 255){
-      if(power < 0){
+    if (abs(power) > 255) {
+      if (power < 0) {
         power = -255;
-      }else{
+      } else {
         power = 255;
       }
     }
@@ -179,47 +195,57 @@ public:
     // Serial.print(" | ");
 
     turn(power);
-
   }
 
   int getEncoderOffset() {
     return (motor2.getEncoderCount()) + (motor1.getEncoderCount());
   }
 
-  float getAngle(){
-    return (float)(((motor1.getEncoderCount() + motor2.getEncoderCount()) % 25000) * 0.0144); // 0.0144 is equivalent to * 360 / 25000
+  float getAngle() {
+    return (float)(((motor1.getEncoderCount() + motor2.getEncoderCount()) % 25000) * 0.0144);  // 0.0144 is equivalent to * 360 / 25000
   }
 
-  void update(){
+  void update() {
     float currentAngle = getAngle();
-    setSpeed(targetSpeed); //temporarily 6 but i need to make a lookup table
 
     Serial.println(abs(currentAngle - targetAngle));
-    if(abs(currentAngle - targetAngle) > 3){//3 degree tolerance
-
+    if (abs(currentAngle - targetAngle) > 3) {  //3 degree tolerance
+      if (prevState == 1) {
+        prevTime = micros();
+        eI = 0;
+        ePPrevious = 0;
+        prevState = 0;
+      }
       turnToAngle(targetAngle);
-    }else{
-      setSpeed(targetSpeed); //temporarily 6 but i need to make a lookup table
+    } else {
+      if (prevState == 0) {
+        prevTime = micros();
+        eI = 0;
+        ePPrevious = 0;
+        prevState = 1;
+      }
+      setSpeed(targetSpeed);  //temporarily 6 but i need to make a lookup table
     }
   }
 
-  void setTargetSpeed(float new_targetSpeed){
+  void setTargetSpeed(float new_targetSpeed) {
     targetSpeed = new_targetSpeed;
   }
 
-  void setTargetAngle(float new_targetAngle){
+  void setTargetAngle(float new_targetAngle) {
     targetAngle = new_targetAngle;
   }
 
 private:
   Motor& motor1;
   Motor& motor2;
-  float PIDconstants[3] = {};
+  float PIDconstants[6] = {};
   float previousTime = 0;
   float eI = 0;
   float ePPrevious = 0;
   float targetAngle = 0;
   float targetSpeed = 0;
+  int prevState = 0;  //0 --> turning, 1 --> speed control
 };
 
 Motor motor1(2, 4, 15);
@@ -257,7 +283,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encA2), tickEncoder2, RISING);
   motor1.setSpeedPIDconstants(kP, kI, kD, kD2);
   motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
-  module.setPIDconstants(100, 0, 0);//raise P, add an I term
+  module.setPIDconstants(100, 0, 0);  //raise P, add an I term
   Serial.begin(9600);
   module.setTargetSpeed(200);
   // module.setTargetAngle(30);
@@ -266,7 +292,7 @@ void setup() {
 float previousCalculate = 0;
 float previousCalculate2 = 0;
 
-int speed = 250;
+int speed = 300;
 // int pollingRate = round((double)(0.0002 * speed * speed) - (0.134 * speed) + 27.2);
 //0.0002x^2 - 0.134x + 26.2
 // int pollingRate = round((double)(-0.00009 *speed *speed) + (0.0022 * speed) + 10.972);
@@ -278,8 +304,9 @@ void loop() {
   // if(Serial.available() > 0){
   //   speed = Serial.read();
   // }
-
-  module.setSpeed(speed);
+  motor1.setPower(255);
+  motor2.setPower(255);
+  // module.setSpeed(speed);
   // module.turnToAngle(90);
   Serial.print(motor1.getSpeed());
   Serial.print(" | ");
@@ -289,7 +316,7 @@ void loop() {
   Serial.print(" | ");
   Serial.println(pollingRateLookup[speed]);
   // Serial.println(module.getAngle());
-    // module.update();
+  // module.update();
 
   // motor1.setSpeed(300, true);
   // motor2.setSpeed(300, false);
@@ -310,5 +337,4 @@ void loop() {
 
   // Serial.println(motor2.getSpeed());
   // Serial.println(module.getEncoderOffset());
-  
 }
