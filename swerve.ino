@@ -146,7 +146,6 @@ public:
   }
 
   void setSpeed(float speed) {
-    float adjustedError = 0;
     //calculate adjusted error using a PID loop, using targetAngle - getAngle() as e(t)
     long currentTime = micros();
     float dT = ((float)(currentTime - previousTime)) / 1e06;
@@ -155,7 +154,10 @@ public:
     eI = eI + (eP * dT);
     float eD = (eP - ePPrevious) / dT;
 
-    float adjustedError = (int)((eP * PIDconstants[3]) + (eI * PIDconstants[4]) + (eD * PIDconstants[5]))
+    float adjustedError = (int)((eP * PIDconstants[3]) + (eI * PIDconstants[4]) + (eD * PIDconstants[5]));
+
+    Serial.print("ADJ error: ");
+    Serial.println(adjustedError);
 
     motor1.setSpeed(speed - adjustedError);
     motor2.setSpeed(-speed + adjustedError);
@@ -208,10 +210,9 @@ public:
   void update() {
     float currentAngle = getAngle();
 
-    Serial.println(abs(currentAngle - targetAngle));
     if (abs(currentAngle - targetAngle) > 3) {  //3 degree tolerance
       if (prevState == 1) {
-        prevTime = micros();
+        previousTime = micros();
         eI = 0;
         ePPrevious = 0;
         prevState = 0;
@@ -219,7 +220,7 @@ public:
       turnToAngle(targetAngle);
     } else {
       if (prevState == 0) {
-        prevTime = micros();
+        previousTime = micros();
         eI = 0;
         ePPrevious = 0;
         prevState = 1;
@@ -234,6 +235,10 @@ public:
 
   void setTargetAngle(float new_targetAngle) {
     targetAngle = new_targetAngle;
+  }
+
+  float getTargetAngle(){
+    return targetAngle;
   }
 
 private:
@@ -284,6 +289,7 @@ void setup() {
   motor1.setSpeedPIDconstants(kP, kI, kD, kD2);
   motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
   module.setPIDconstants(100, 0, 0);  //raise P, add an I term
+  module.setSpeedAdjPIDconstants(10, 0, 0);
   Serial.begin(9600);
   module.setTargetSpeed(200);
   // module.setTargetAngle(30);
@@ -304,19 +310,21 @@ void loop() {
   // if(Serial.available() > 0){
   //   speed = Serial.read();
   // }
-  motor1.setPower(255);
-  motor2.setPower(255);
+  // motor1.setPower(255);
+  // motor2.setPower(255);
   // module.setSpeed(speed);
   // module.turnToAngle(90);
-  Serial.print(motor1.getSpeed());
+  module.setTargetAngle(30);
+  module.setTargetSpeed(200);
+  // Serial.print(motor1.getSpeed());
+  // Serial.print(" | ");
+  // Serial.print(motor2.getSpeed());
+  // Serial.print(" | ");
+  Serial.print(module.getAngle() - module.getTargetAngle());
   Serial.print(" | ");
-  Serial.print(motor2.getSpeed());
-  Serial.print(" | ");
-  Serial.print(module.getEncoderOffset());
-  Serial.print(" | ");
-  Serial.println(pollingRateLookup[speed]);
+  // Serial.println(pollingRateLookup[speed]);
   // Serial.println(module.getAngle());
-  // module.update();
+  module.update();
 
   // motor1.setSpeed(300, true);
   // motor2.setSpeed(300, false);
