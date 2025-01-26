@@ -156,10 +156,9 @@ public:
 
     float adjustedError = (int)((eP * PIDconstants[3]) + (eI * PIDconstants[4]) + (eD * PIDconstants[5]));
 
-    Serial.print("ADJ error: ");
-    Serial.println(adjustedError);
-
-    motor1.setSpeed(speed - adjustedError);
+    // Serial.print("ADJ error: ");
+    // Serial.println(adjustedError);
+    motor1.setSpeed(speed + adjustedError);
     motor2.setSpeed(-speed + adjustedError);
   }
 
@@ -210,7 +209,7 @@ public:
   void update() {
     float currentAngle = getAngle();
 
-    if (abs(currentAngle - targetAngle) > 3) {  //3 degree tolerance
+    if (abs(currentAngle - targetAngle) > 2) {  //2 degree tolerance
       if (prevState == 1) {
         previousTime = micros();
         eI = 0;
@@ -227,6 +226,12 @@ public:
       }
       setSpeed(targetSpeed);  //temporarily 6 but i need to make a lookup table
     }
+
+    Serial.print(motor1.getSpeed());
+    Serial.print(" | ");
+    Serial.print(motor2.getSpeed());
+    Serial.print(" | ");
+    Serial.println(abs(currentAngle - targetAngle));
   }
 
   void setTargetSpeed(float new_targetSpeed) {
@@ -289,7 +294,7 @@ void setup() {
   motor1.setSpeedPIDconstants(kP, kI, kD, kD2);
   motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
   module.setPIDconstants(100, 0, 0);  //raise P, add an I term
-  module.setSpeedAdjPIDconstants(10, 0, 0);
+  module.setSpeedAdjPIDconstants(15, 0, 0);
   Serial.begin(9600);
   module.setTargetSpeed(200);
   // module.setTargetAngle(30);
@@ -320,29 +325,10 @@ void loop() {
   // Serial.print(" | ");
   // Serial.print(motor2.getSpeed());
   // Serial.print(" | ");
-  Serial.print(module.getAngle() - module.getTargetAngle());
-  Serial.print(" | ");
+  // Serial.print(module.getAngle() - module.getTargetAngle());
+  // Serial.print(" | ");
   // Serial.println(pollingRateLookup[speed]);
   // Serial.println(module.getAngle());
   module.update();
 
-  // motor1.setSpeed(300, true);
-  // motor2.setSpeed(300, false);
-  // Serial.print(motor1.getSpeed());
-  // Serial.print(" | ");
-  // Serial.print(motor2.getSpeed());
-  // Serial.print(" | ");
-  // Serial.print(speed);
-  // Serial.print(" | ");
-  // Serial.print(-speed);
-  // Serial.print(" | ");
-  // Serial.print(pollingRate);
-  // Serial.print(" | ");
-  // Serial.print(module.getEncoderOffset());
-  // Serial.print(" | ");
-  // Serial.println(module.getAngle());
-
-
-  // Serial.println(motor2.getSpeed());
-  // Serial.println(module.getEncoderOffset());
 }
