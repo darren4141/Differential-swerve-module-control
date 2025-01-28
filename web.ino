@@ -110,3 +110,39 @@ void loop() {
     Serial.println("Client Disconnected.");
   }
 }
+
+
+//test code:
+
+/*
+
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected! IP address: " + WiFi.localIP());
+  
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send_P(200, "text/html", webpage);
+  });
+
+  server.on("/setPower", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("value")) {
+      WS_power = request->getParam("value")->value().toInt();
+      Serial.println("Power set to: " + String(WS_power));
+    }
+    request->send(200, "text/plain", "OK");
+  });
+
+  server.on("/getSpeeds", HTTP_GET, [](AsyncWebServerRequest *request) {
+    int motor1Speed = motor1.getSpeed();  // Replace with actual function
+    int motor2Speed = motor2.getSpeed();  // Replace with actual function
+    String json = "{\"motor1\":" + String(motor1Speed) + ",\"motor2\":" + String(motor2Speed) + "}";
+    request->send(200, "application/json", json);
+  });
+
+  server.begin();
+
+  */
