@@ -1,14 +1,15 @@
-#define FWDPIN1 21
-#define BWDPIN1 4
-#define ENABLEPIN1 15
-#define ENCA1 16
-#define ENCB1 17
+#include "module.ino"
+#include "website.h"
 
-#define FWDPIN2 18
-#define BWDPIN2 19
-#define ENABLEPIN2 5
-#define ENCA2 22
-#define ENCB2 23
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+
+const char *ssid = "Cik_Mesh_1200_5BA0";
+const char *password = "19950420edward";
+
+AsyncWebServer server(80);  // Web server on port 80
+int WS_power = 0;  // Variable to store slider value
+int sliderValue = 0;  // Variable to store slider value
 
 const int pollingRateLookup[261] = { 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 };
 
@@ -43,6 +44,14 @@ public:
       analogWrite(enablePin, abs(power));
       digitalWrite(fwdPin, LOW);
       digitalWrite(bwdPin, HIGH);
+    }
+    if(cycle % 20 == 0){
+      long currentTime = micros();
+      float dT = ((float)(currentTime - previousTime)) / 1.0e6;
+      float speed = (encoderCount - prevEncoderCount) / dT;
+      prevEncoderCount = encoderCount;
+      previousTime = currentTime;
+      speedPrevious = speed;
     }
   }
 
@@ -288,14 +297,45 @@ double kD = 0;
 double kD2 = 0.125;
 
 void setup() {
+  Serial.begin(115200);
   motor1.setSpeedPIDconstants(kP, kI, kD, kD2);
   motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
   module.setPIDconstants(100, 0, 0);  //raise P, add an I term
   module.setSpeedAdjPIDconstants(15, 0, 0);
-  Serial.begin(115200);
   module.setTargetSpeed(200);
   attachInterrupt(digitalPinToInterrupt(ENCA1), tickEncoder1, RISING);
   attachInterrupt(digitalPinToInterrupt(ENCA2), tickEncoder2, RISING);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+  Serial.println(WiFi.localIP());
+
+  // Serve the HTML page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", webpage);
+  });
+
+  // Handle slider input
+  server.on("/setPower", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (request->hasParam("value")) {
+      sliderValue = request->getParam("value")->value().toInt();
+      Serial.println("Slider Value: " + String(sliderValue));
+    }
+    request->send(200, "text/plain", "OK");
+  });
+
+  server.on("/getSpeeds", HTTP_GET, [](AsyncWebServerRequest *request) {
+    int motor1Speed = motor1.getSpeed();  // Replace with actual function
+    int motor2Speed = motor2.getSpeed();  // Replace with actual function
+    String json = "{\"motor1\":" + String(motor1Speed) + ",\"motor2\":" + String(motor2Speed) + "}";
+    request->send(200, "application/json", json);
+  });
+
+  server.begin();
   // module.setTargetAngle(30);
 }
 
@@ -318,8 +358,8 @@ void loop() {
   // motor2.setPower(255);
   // module.setSpeed(speed);
   // module.turnToAngle(90);
-  module.setTargetAngle(30);
-  module.setTargetSpeed(200);
+  // module.setTargetAngle(30);
+  // module.setTargetSpeed(200);
   // Serial.print(motor1.getSpeed());
   // Serial.print(" | ");
   // Serial.print(motor2.getSpeed());
@@ -328,6 +368,10 @@ void loop() {
   // Serial.print(" | ");
   // Serial.println(pollingRateLookup[speed]);
   // Serial.println(module.getAngle());
-  module.update();
+  // module.update();
+  module.setPower(sliderValue);
+  Serial.print(motor1.getSpeed());
+  Serial.print(" | ");
+  Serial.println(motor2.getSpeed());
 
 }
