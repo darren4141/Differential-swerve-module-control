@@ -1,14 +1,14 @@
-const int fwdPin1 = 2;
-const int bwdPin1 = 4;
-const int enablePin1 = 15;
-const int encA1 = 16;
-const int encB1 = 17;
+#define FWDPIN1 21
+#define BWDPIN1 4
+#define ENABLEPIN1 15
+#define ENCA1 16
+#define ENCB1 17
 
-const int fwdPin2 = 18;
-const int bwdPin2 = 19;
-const int enablePin2 = 5;
-const int encA2 = 22;
-const int encB2 = 23;
+#define FWDPIN2 18
+#define BWDPIN2 19
+#define ENABLEPIN2 5
+#define ENCA2 22
+#define ENCB2 23
 
 const int pollingRateLookup[261] = { 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 };
 
@@ -51,7 +51,6 @@ public:
       setPower(0);
       return;
     }
-
 
     int pollingRate;
     if (abs(targetSpeed) > 260) {
@@ -133,6 +132,10 @@ public:
     : motor1(new_motor1), motor2(new_motor2) {
     motor1.initialize();
     motor2.initialize();
+    pinMode(ENCA1, INPUT);
+    pinMode(ENCB1, INPUT);
+    pinMode(ENCA2, INPUT);
+    pinMode(ENCB2, INPUT);
   }
 
   void setPower(int power) {
@@ -258,13 +261,13 @@ private:
   int prevState = 0;  //0 --> turning, 1 --> speed control
 };
 
-Motor motor1(2, 4, 15);
-Motor motor2(18, 19, 5);
+Motor motor1(FWDPIN1, BWDPIN1, ENABLEPIN1);
+Motor motor2(FWDPIN2, BWDPIN2, ENABLEPIN2);
 
 Module module(motor1, motor2);
 
 void tickEncoder1() {
-  if (digitalRead(encA1) > digitalRead(encB1)) {
+  if (digitalRead(ENCA1) > digitalRead(ENCB1)) {
     motor1.incEncoderCount();
   } else {
     motor1.decEncoderCount();
@@ -272,7 +275,7 @@ void tickEncoder1() {
 }
 
 void tickEncoder2() {
-  if (digitalRead(encA2) > digitalRead(encB2)) {
+  if (digitalRead(ENCA2) > digitalRead(ENCB2)) {
     motor2.incEncoderCount();
   } else {
     motor2.decEncoderCount();
@@ -285,18 +288,14 @@ double kD = 0;
 double kD2 = 0.125;
 
 void setup() {
-  pinMode(encA1, INPUT);
-  pinMode(encB1, INPUT);
-  pinMode(encA2, INPUT);
-  pinMode(encB2, INPUT);
-  attachInterrupt(digitalPinToInterrupt(encA1), tickEncoder1, RISING);
-  attachInterrupt(digitalPinToInterrupt(encA2), tickEncoder2, RISING);
   motor1.setSpeedPIDconstants(kP, kI, kD, kD2);
   motor2.setSpeedPIDconstants(kP, kI, kD, kD2);
   module.setPIDconstants(100, 0, 0);  //raise P, add an I term
   module.setSpeedAdjPIDconstants(15, 0, 0);
-  Serial.begin(9600);
+  Serial.begin(115200);
   module.setTargetSpeed(200);
+  attachInterrupt(digitalPinToInterrupt(ENCA1), tickEncoder1, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCA2), tickEncoder2, RISING);
   // module.setTargetAngle(30);
 }
 
