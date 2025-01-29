@@ -1,4 +1,4 @@
-#include "module.ino"
+#include "module.h"
 #include "website.h"
 
 #include <WiFi.h>
