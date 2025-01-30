@@ -1,3 +1,4 @@
+const char webpage[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
@@ -59,11 +60,11 @@
       fetchSpeeds((data) => {
         let timestamp = new Date().toLocaleTimeString();
         let power = document.getElementById('sliderValue').innerText;
-        logData.push([timestamp, power, data.motor1, data.motor2]);
+        logData.unshift([timestamp, power, data.motor1, data.motor2]); // Store newest first
 
-        // Add new row to the table
+        // Update table with the newest value at the top
         let table = document.getElementById('logTable');
-        let newRow = table.insertRow();
+        let newRow = table.insertRow(1); // Insert at index 1 (below the header)
         newRow.insertCell(0).innerText = timestamp;
         newRow.insertCell(1).innerText = power;
         newRow.insertCell(2).innerText = data.motor1;
@@ -100,3 +101,4 @@
   </script>
 </body>
 </html>
+)rawliteral";
